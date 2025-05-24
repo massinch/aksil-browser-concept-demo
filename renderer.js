@@ -15,7 +15,7 @@ let activeTabId = null;
 let tabIdCounter = 0;
 let openaiApiKey = null;
 
-function createTab(url = 'https://example.com') {
+function createTab(url = 'about:blank') {
     const id = ++tabIdCounter;
     // Tab element
     const tab = document.createElement('div');
@@ -91,6 +91,8 @@ function setActiveTab(id) {
         } else {
             tab.classList.remove('active');
             webview.classList.remove('active');
+            tab.style.background = '';
+            tab.style.color = '';
         }
     });
 }
@@ -194,18 +196,19 @@ function showPhishingModal(message) {
         modal.style.top = '50%';
         modal.style.left = '50%';
         modal.style.transform = 'translate(-50%, -50%)';
-        modal.style.background = '#fff';
+        modal.style.background = '#9B2323';
+        modal.style.color = '#fff';
         modal.style.padding = '24px';
-        modal.style.border = '2px solid #333';
+        modal.style.border = '2px solid #9B2323';
         modal.style.borderRadius = '8px';
         modal.style.zIndex = 9999;
-        modal.style.boxShadow = '0 2px 16px rgba(0,0,0,0.2)';
+        modal.style.boxShadow = '0 2px 16px rgba(155,35,35,0.2)';
         modal.style.maxWidth = '90vw';
         modal.style.maxHeight = '80vh';
         modal.style.overflowY = 'auto';
         document.body.appendChild(modal);
     }
-    modal.innerHTML = `<div style='white-space:pre-wrap;'>${message}</div><br><button id='close-phishing-modal'>Close</button>`;
+    modal.innerHTML = `<div style='white-space:pre-wrap;'>${message}</div><br><button id='close-phishing-modal' style='background:#fff;color:#9B2323;border:1px solid #9B2323;padding:6px 16px;border-radius:4px;'>Close</button>`;
     document.getElementById('close-phishing-modal').onclick = () => modal.remove();
 }
 
@@ -239,18 +242,19 @@ function showApiKeyModal(onSave) {
         modal.style.top = '50%';
         modal.style.left = '50%';
         modal.style.transform = 'translate(-50%, -50%)';
-        modal.style.background = '#fff';
+        modal.style.background = '#9B2323';
+        modal.style.color = '#fff';
         modal.style.padding = '24px';
-        modal.style.border = '2px solid #333';
+        modal.style.border = '2px solid #9B2323';
         modal.style.borderRadius = '8px';
         modal.style.zIndex = 10000;
-        modal.style.boxShadow = '0 2px 16px rgba(0,0,0,0.2)';
+        modal.style.boxShadow = '0 2px 16px rgba(155,35,35,0.2)';
         modal.innerHTML = `
             <div style='font-size:16px;margin-bottom:10px;'>Enter your OpenAI API key:</div>
             <input id='api-key-input' type='password' style='width:100%;font-size:15px;padding:6px;margin-bottom:12px;border-radius:4px;border:1px solid #ccc;' />
             <br>
-            <button id='save-api-key' style='margin-right:8px;'>Save</button>
-            <button id='cancel-api-key'>Cancel</button>
+            <button id='save-api-key' style='margin-right:8px;background:#fff;color:#9B2323;border:1px solid #9B2323;padding:6px 16px;border-radius:4px;'>Save</button>
+            <button id='cancel-api-key' style='background:#fff;color:#9B2323;border:1px solid #9B2323;padding:6px 16px;border-radius:4px;'>Cancel</button>
         `;
         document.body.appendChild(modal);
     }
@@ -301,7 +305,7 @@ async function checkPhishing() {
                     content: [
                         {
                             type: "text",
-                            text: `Analyze this webpage screenshot and the following URL for potential impersonation or phishing attempts.\n\nURL: ${url}\n\nPay special attention to:\n- Domain manipulation (typosquatting, homograph attacks, suspicious subdomains, misuse of legitimate domains, URL encoding tricks, HTTP vs HTTPS)\n- Visual indicators (branding, layout, security badges, input requests, urgency, grammar, etc.)\n\nRespond with a valid JSON object containing:\n{\n  \"isPhishing\": \"Yes\" or \"No\",\n  \"confidence\": number (0-100),\n  \"explanation\": \"detailed explanation\",\n  \"urlFindings\": [\"list of suspicious or safe URL factors\"]\n}`
+                            text: `Analyze this webpage screenshot and the following URL for potential impersonation or phishing attempts.\n\nURL: ${url}\n\nPay special attention to:\n- Domain manipulation (typosquatting, homograph attacks, suspicious subdomains, misuse of legitimate domains, URL encoding tricks, HTTP vs HTTPS)\n- Visual indicators (branding, layout, security badges, input requests, urgency, grammar, etc.)\n\nRespond with a valid JSON object containing:\n{\n  \"isPhishing\": \"Yes\" or \"No\",\n  \"confidence\": number (0-100),\n  \"impersonation\": {\n    \"isImpersonating\": true/false,\n    \"originalEntity\": \"name of the entity being impersonated or null\"\n  },\n  \"explanation\": \"brief explanation\",\n  \"urlFindings\": [\"list of key suspicious or safe URL factors\"]\n}`
                         },
                         {
                             type: "image_url",
@@ -330,7 +334,7 @@ async function checkPhishing() {
         let parsed = null;
         try { parsed = JSON.parse(analysis); } catch (e) {}
         let msg = parsed ?
-            `Phishing: ${parsed.isPhishing}\nConfidence: ${parsed.confidence}%\nExplanation: ${parsed.explanation}\n\nURL Findings:\n${(parsed.urlFindings||[]).map(f=>'- '+f).join('\n')}` :
+            `Phishing: ${parsed.isPhishing}\nConfidence: ${parsed.confidence}%\n${parsed.impersonation.isImpersonating ? `Impersonating: ${parsed.impersonation.originalEntity}\n` : ''}Explanation: ${parsed.explanation}\n\nKey Findings:\n${(parsed.urlFindings||[]).map(f=>'- '+f).join('\n')}` :
             analysis;
         showPhishingModal(msg);
     } catch (err) {
